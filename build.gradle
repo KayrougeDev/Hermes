@@ -3,8 +3,8 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
     id 'maven-publish'
 }
-group 'com.mohistmc'
-version '1.16.5-0.1-SNAPSHOT'
+group 'fr.kayrouge'
+version '1.0.0'
 
 java {
     toolchain {

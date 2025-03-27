@@ -1,5 +1,16 @@
-name: MohistPlugin
-main: com.mohistmc.mohistplugin.Main
-version: 0.1
-author: MohistMC
+name: Hermes
+main: fr.kayrouge.hermes.Hermes
+version: 1.0.0
+author: Kayrouge
 api-version: 1.16
+commands:
+  invsee:
+    description: Get given player inventory
+    permission: hermes.commands.mod.invsee
+    usage: /invsee <player>
+  territory:
+    permission: hermes.commands.territory
+    usage: /territory help
+  teams:
+    permission: hermes.commands.teams
+    usage: /teams help
