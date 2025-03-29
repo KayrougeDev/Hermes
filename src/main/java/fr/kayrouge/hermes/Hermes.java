@@ -23,12 +23,13 @@ public class Hermes extends JavaPlugin implements Listener {
     public static Hermes PLUGIN;
     public static Logger LOGGER;
 
-    private static final TerritoryManager territoryManager = new TerritoryManager();
+    private static TerritoryManager territoryManager;
 
     @Override
     public void onEnable() {
         PLUGIN = this;
         LOGGER = PLUGIN.getLogger();
+        territoryManager = new TerritoryManager(Bukkit.getWorlds().get(0));
 
         Bukkit.getLogger().info(Style.getASCIILine());
         for(String s : Style.getASCIILogo().split("\n")) {
@@ -45,6 +46,7 @@ public class Hermes extends JavaPlugin implements Listener {
     }
 
     public void onDisable() {
+
     }
 
     private void registerEvents() {
@@ -77,6 +79,7 @@ public class Hermes extends JavaPlugin implements Listener {
     public static TerritoryManager getTerritoryManager() {
         return territoryManager;
     }
+
 
     //    @EventHandler
 //    public void onTest(final BukkitHookForgeEvent e) {

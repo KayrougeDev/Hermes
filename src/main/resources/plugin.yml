@@ -3,6 +3,7 @@ main: fr.kayrouge.hermes.Hermes
 version: 1.0.0
 author: Kayrouge
 api-version: 1.16
+depend: [ProtocolLib]
 commands:
   invsee:
     description: Get given player inventory

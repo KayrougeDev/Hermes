@@ -1,9 +1,11 @@
 package fr.kayrouge.hermes.team;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,7 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
             Team team = Team.create(args[1], TeamColorMapper.getRandomColor(), player);
             commandSender.sendMessage("Created "+team.getColor()+team.getName());
+            return true;
         }
 
         return false;

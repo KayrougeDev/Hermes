@@ -20,8 +20,10 @@ tasks.withType(JavaCompile).configureEach {
 repositories {
     mavenCentral()
     maven { url "https://maven.mohistmc.com/" }
+    maven { url "https://repo.dmulloy2.net/repository/public/" }
 }
 dependencies {
     implementation 'com.mohistmc:mohistdev:1.16.5'
     implementation fileTree(dir: 'lib', include: ['*.jar'])
+    compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.3.0"
 }
