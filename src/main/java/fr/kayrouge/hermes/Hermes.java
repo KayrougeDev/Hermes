@@ -23,6 +23,9 @@ public class Hermes extends JavaPlugin implements Listener {
     public static Hermes PLUGIN;
     public static Logger LOGGER;
 
+    // TODO Dynamically create TerritoryManager in the game with a special item (user select 2 corner), saved in a file (multiple territory allowed on 1 world)
+    // TODO one game per territory, players can join/spec game
+    // TODO player can expand their territory
     private static TerritoryManager territoryManager;
 
     @Override

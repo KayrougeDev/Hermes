@@ -154,7 +154,6 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
 
         if(args[0].equalsIgnoreCase("updateAllTeams")) {
             Hermes.getTerritoryManager().updateBlocksForAllTeam();
-            // TODO Fix
             return true;
         }
 
@@ -217,6 +216,7 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
             if(dataContainer.has(STICK_TEAM_DATA, PersistentDataType.STRING)) {
                 Hermes.getTerritoryManager().captureBlock(block.getX(), block.getZ(),
                         Team.getTeam(dataContainer.get(STICK_TEAM_DATA, PersistentDataType.STRING)));
+                event.setCancelled(true);
             }
         }
     }

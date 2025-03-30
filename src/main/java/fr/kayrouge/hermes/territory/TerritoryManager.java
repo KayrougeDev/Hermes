@@ -1,6 +1,5 @@
 package fr.kayrouge.hermes.territory;
 
-import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.team.Team;
 import fr.kayrouge.hermes.team.TeamColorMapper;
 import fr.kayrouge.hermes.util.FakeBlockUtils;
@@ -48,7 +47,24 @@ public class TerritoryManager {
 
         // Vérifier si tout le chunk est capturé par une seule équipe
         checkChunkCapture(chunkKey);
+
+        Block highestBlock = world.getHighestBlockAt(x, z);
+        Material material;
+        if (team.equals(Team.NEUTRAL)) {
+            material = highestBlock.getType();
+        } else {
+            material = TeamColorMapper.getMaterialFromColor(team.getColor());
+        }
+
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            FakeBlockUtils.sendFakeBlock(
+                    player,
+                    new Location(world, x, highestBlock.getY(), z),
+                    material
+            );
+        });
     }
+
 
     // Vérifie si un chunk est totalement conquis
     private void checkChunkCapture(String chunkKey) {
@@ -72,28 +88,33 @@ public class TerritoryManager {
             HashMap<String, Set<Integer>> teamsBlocks = territoryBlocks.get(chunkKey);
             if (teamsBlocks == null || !teamsBlocks.containsKey(team.getName())) continue;
 
+            String[] chunkParts = chunkKey.split(",");
+            int chunkX = Integer.parseInt(chunkParts[0]);
+            int chunkZ = Integer.parseInt(chunkParts[1]);
+
             for (int blockXZ : teamsBlocks.get(team.getName())) {
-                int x = ((Integer.bitCount(blockXZ >> 4)) << 4) | (blockXZ >> 4);
-                int z = blockXZ & 15;
+                int x = (chunkX << 4) | (blockXZ >> 4);
+                int z = (chunkZ << 4) | (blockXZ & 15);
 
                 Block highestBlock = world.getHighestBlockAt(x, z);
                 Location location = new Location(world, x, highestBlock.getY(), z);
-                Hermes.LOGGER.info(location.toString());
+
                 Material material;
-                if(team.equals(Team.NEUTRAL)) {
+                if (team.equals(Team.NEUTRAL)) {
                     material = highestBlock.getType();
-                }
-                else {
+                } else {
                     material = TeamColorMapper.getMaterialFromColor(team.getColor());
                 }
-                Bukkit.getOnlinePlayers().forEach(player ->
-                        FakeBlockUtils.sendFakeBlock(player, location, material));
+
+                Bukkit.getOnlinePlayers().forEach(player -> FakeBlockUtils.sendFakeBlock(player, location, material));
             }
         }
     }
 
     public void updateBlocksForAllTeam() {
-        Team.getTeams().forEach((s, team) -> updateAllBlocks(team));
+        Team.getTeams().forEach((s, team) -> {
+            updateAllBlocks(team);
+        });
     }
 
 
