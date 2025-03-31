@@ -8,6 +8,7 @@ import fr.kayrouge.hermes.team.TeamsCommand;
 import fr.kayrouge.hermes.territory.TerritoryCommand;
 import fr.kayrouge.hermes.territory.TerritoryManager;
 import fr.kayrouge.hermes.util.Style;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
@@ -16,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.annotation.Nonnull;
 import java.util.logging.Logger;
 
 public class Hermes extends JavaPlugin implements Listener {
@@ -23,16 +25,21 @@ public class Hermes extends JavaPlugin implements Listener {
     public static Hermes PLUGIN;
     public static Logger LOGGER;
 
-    // TODO Dynamically create TerritoryManager in the game with a special item (user select 2 corner), saved in a file (multiple territory allowed on 1 world)
-    // TODO one game per territory, players can join/spec game
-    // TODO player can expand their territory
-    private static TerritoryManager territoryManager;
+    private BukkitAudiences adventure;
+
+    public @Nonnull BukkitAudiences adventure() {
+        if(this.adventure == null) {
+            throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
+        }
+        return this.adventure;
+    }
 
     @Override
     public void onEnable() {
         PLUGIN = this;
         LOGGER = PLUGIN.getLogger();
-        territoryManager = new TerritoryManager(Bukkit.getWorlds().get(0));
+
+        this.adventure = BukkitAudiences.create(this);
 
         Bukkit.getLogger().info(Style.getASCIILine());
         for(String s : Style.getASCIILogo().split("\n")) {
@@ -44,12 +51,19 @@ public class Hermes extends JavaPlugin implements Listener {
         saveConfig();
         saveDefaultConfig();
         reloadConfig();
+
+        TerritoryManager.load();
+
         registerEvents();
         registerCommands();
     }
 
     public void onDisable() {
-
+        TerritoryManager.save();
+        if(this.adventure != null) {
+            this.adventure.close();
+            this.adventure = null;
+        }
     }
 
     private void registerEvents() {
@@ -79,9 +93,6 @@ public class Hermes extends JavaPlugin implements Listener {
         }
     }
 
-    public static TerritoryManager getTerritoryManager() {
-        return territoryManager;
-    }
 
 
     //    @EventHandler

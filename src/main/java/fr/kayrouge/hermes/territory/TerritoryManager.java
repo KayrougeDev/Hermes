@@ -1,5 +1,6 @@
 package fr.kayrouge.hermes.territory;
 
+import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.team.Team;
 import fr.kayrouge.hermes.team.TeamColorMapper;
 import fr.kayrouge.hermes.util.FakeBlockUtils;
@@ -8,19 +9,107 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class TerritoryManager {
+
+    // TODO Dynamically create TerritoryManager in Minecraft with a special item (user select 2 corner),
+    // TODO saved in a file (multiple territory allowed on 1 world)
+
+    // TODO one game per territory, players can join/spec game
+    // TODO player can expand their territory
+    private static final HashMap<String, TerritoryManager> territoryManagers = new HashMap<>();
+
+    public static final File TERRITORIES_FILE = new File("territories.yml");
+
     private final HashMap<String, String> territoryChunks = new HashMap<>(); // Chunk conquis ("chunkX,chunkZ" -> team)
     private final HashMap<String, HashMap<String, Set<Integer>>> territoryBlocks = new HashMap<>(); // Chunks contestés ("chunkX,chunkZ" -> Map<team, Set<blocXZ>>)
 
     private final World world;
 
-    public TerritoryManager(World world) {
+    private final int bottomLeftX;
+    private final int bottomLeftY;
+
+    private final int topRightX;
+    private final int topRightY;
+
+    private TerritoryManager(World world, int bottomLeftX, int bottomLeftY, int topRightX, int topRightY) {
         this.world = world;
+        this.bottomLeftX = bottomLeftX;
+        this.bottomLeftY = bottomLeftY;
+        this.topRightX = topRightX;
+        this.topRightY = topRightY;
+    }
+
+    public static @Nullable TerritoryManager create(String name, World world, int bottomLeftX, int bottomLeftY, int topRightX, int topRightY) {
+        TerritoryManager territoryManager = new TerritoryManager(world, bottomLeftX, bottomLeftY, topRightX, topRightY);
+        if(territoryManager.isValid()) {
+            Bukkit.broadcastMessage("VALID territory "+name);
+            territoryManagers.put(name, territoryManager);
+            return territoryManager;
+        }
+        return null;
+    }
+
+    public static void save() {
+        YamlConfiguration config = new YamlConfiguration();
+        for (Map.Entry<String, TerritoryManager> entry : territoryManagers.entrySet()) {
+            String key = entry.getKey();
+            TerritoryManager territory = entry.getValue();
+
+            ConfigurationSection section = config.createSection(key);
+            section.set("world", territory.getWorld().getName());
+            section.set("bottomLeft.x", territory.bottomLeftX);
+            section.set("bottomLeft.y", territory.bottomLeftY);
+            section.set("topRight.x", territory.topRightX);
+            section.set("topRight.y", territory.topRightY);
+
+            try {
+                config.save(TERRITORIES_FILE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static void load() {
+        territoryManagers.clear();
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(TERRITORIES_FILE);
+
+        for (String key : config.getKeys(false)) {
+            ConfigurationSection section = config.getConfigurationSection(key);
+            if (section == null) continue;
+
+            String worldName = section.getString("world");
+            if(worldName == null) continue;
+            World configWorld = Bukkit.getWorld(worldName);
+            if(configWorld == null) continue;
+            int bottomLeftX = section.getInt("bottomLeft.x");
+            int bottomLeftY = section.getInt("bottomLeft.y");
+            int topRightX = section.getInt("topRight.x");
+            int topRightY = section.getInt("topRight.y");
+
+            TerritoryManager.create(key, configWorld, bottomLeftX, bottomLeftY, topRightX, topRightY);
+        }
+    }
+
+    public boolean isValid() {
+        boolean xSizeValid = false;
+        boolean ySizeValid = false;
+        if(this.topRightX - this.bottomLeftX > 0) xSizeValid = true;
+        if(this.topRightY - this.bottomLeftY > 0) ySizeValid = true;
+
+        return xSizeValid && ySizeValid;
     }
 
     // Capture un bloc (sans Y)
@@ -142,5 +231,9 @@ public class TerritoryManager {
 
     public World getWorld() {
         return world;
+    }
+
+    public static HashMap<String, TerritoryManager> getTerritoryManagers() {
+        return territoryManagers;
     }
 }

@@ -3,6 +3,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
     id 'maven-publish'
 }
+
 group 'fr.kayrouge'
 version '1.0.0'
 
@@ -16,14 +17,27 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-
 repositories {
     mavenCentral()
     maven { url "https://maven.mohistmc.com/" }
     maven { url "https://repo.dmulloy2.net/repository/public/" }
 }
+
+configurations {
+    shade
+    compileClasspath.extendsFrom shade
+}
+
 dependencies {
     implementation 'com.mohistmc:mohistdev:1.16.5'
     implementation fileTree(dir: 'lib', include: ['*.jar'])
     compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.3.0"
+
+    shade 'net.kyori:adventure-api:4.19.0'
+    shade 'net.kyori:adventure-platform-bukkit:4.3.4'
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    relocate 'net.kyori.adventure', 'hermes.libs.adventure'
 }
