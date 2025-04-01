@@ -231,7 +231,7 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
 
                             return true;
                         }
-                        else if(answer.equalsIgnoreCase("create")) {
+                        else if(answer.startsWith("create")) {
                             String[] args = answer.split(" ");
                             if(args.length != 2) {
                                 player.sendMessage("Please insert a name (without space)");

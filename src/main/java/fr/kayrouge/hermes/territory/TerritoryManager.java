@@ -42,18 +42,22 @@ public class TerritoryManager {
     private final int topRightX;
     private final int topRightY;
 
+    private final int xSize;
+    private final int ySize;
+
     private TerritoryManager(World world, int bottomLeftX, int bottomLeftY, int topRightX, int topRightY) {
         this.world = world;
         this.bottomLeftX = bottomLeftX;
         this.bottomLeftY = bottomLeftY;
         this.topRightX = topRightX;
         this.topRightY = topRightY;
+        this.xSize = Math.abs(this.topRightX - this.bottomLeftX);
+        this.ySize = Math.abs(this.topRightY - this.bottomLeftY);
     }
 
     public static @Nullable TerritoryManager create(String name, World world, int bottomLeftX, int bottomLeftY, int topRightX, int topRightY) {
         TerritoryManager territoryManager = new TerritoryManager(world, bottomLeftX, bottomLeftY, topRightX, topRightY);
         if(territoryManager.isValid()) {
-            Bukkit.broadcastMessage("VALID territory "+name);
             territoryManagers.put(name, territoryManager);
             return territoryManager;
         }
@@ -104,12 +108,7 @@ public class TerritoryManager {
     }
 
     public boolean isValid() {
-        boolean xSizeValid = false;
-        boolean ySizeValid = false;
-        if(this.topRightX - this.bottomLeftX > 0) xSizeValid = true;
-        if(this.topRightY - this.bottomLeftY > 0) ySizeValid = true;
-
-        return xSizeValid && ySizeValid;
+        return xSize > 0 && ySize > 0;
     }
 
     // Capture un bloc (sans Y)
@@ -227,6 +226,18 @@ public class TerritoryManager {
 
 
         return Team.NEUTRAL;
+    }
+
+    public int getXSize() {
+        return xSize;
+    }
+
+    public int getYSize() {
+        return ySize;
+    }
+
+    public int getSize() {
+        return getXSize() * getYSize();
     }
 
     public World getWorld() {
