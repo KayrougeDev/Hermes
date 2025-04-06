@@ -1,15 +1,15 @@
 package fr.kayrouge.hermes;
 
-//import com.mohistmc.api.ServerAPI;
-//import com.mohistmc.api.event.BukkitHookForgeEvent;
 import fr.kayrouge.hermes.commands.CommandMod;
-import fr.kayrouge.hermes.event.MiscEvents;
+import fr.kayrouge.hermes.event.ChatEvents;
+import fr.kayrouge.hermes.mohist.MHermes;
 import fr.kayrouge.hermes.team.TeamsCommand;
 import fr.kayrouge.hermes.territory.TerritoryCommand;
 import fr.kayrouge.hermes.territory.TerritoryManager;
 import fr.kayrouge.hermes.util.Style;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -18,6 +18,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.logging.Logger;
 
 public class Hermes extends JavaPlugin implements Listener {
@@ -25,7 +26,11 @@ public class Hermes extends JavaPlugin implements Listener {
     public static Hermes PLUGIN;
     public static Logger LOGGER;
 
+    private static @Nullable MHermes MOHIST_HERMES;
+
     private BukkitAudiences adventure;
+
+    public static NamespacedKey ACTION_ITEM_DATA;
 
     public @Nonnull BukkitAudiences adventure() {
         if(this.adventure == null) {
@@ -34,12 +39,36 @@ public class Hermes extends JavaPlugin implements Listener {
         return this.adventure;
     }
 
+    public static @Nonnull MHermes mohistHermes() {
+        if(MOHIST_HERMES == null) {
+            throw new IllegalStateException("Tried to access MHermes on a non Mohist server!");
+        }
+        return MOHIST_HERMES;
+    }
+
+
     @Override
     public void onEnable() {
         PLUGIN = this;
         LOGGER = PLUGIN.getLogger();
+        boolean isMohistServer;
+        try {
+            Class.forName("com.mohistmc.MohistMC");
+            isMohistServer =  true;
+
+        } catch (ClassNotFoundException e) {
+            isMohistServer = false;
+        }
+        if(isMohistServer) {
+            MOHIST_HERMES = new MHermes(this);
+        }
+        ACTION_ITEM_DATA = new NamespacedKey(PLUGIN, "action_item");
 
         this.adventure = BukkitAudiences.create(this);
+
+        if(isMohist()) {
+            LOGGER.info("Server running on mohist !");
+        }
 
         Bukkit.getLogger().info(Style.getASCIILine());
         for(String s : Style.getASCIILogo().split("\n")) {
@@ -56,6 +85,10 @@ public class Hermes extends JavaPlugin implements Listener {
 
         registerEvents();
         registerCommands();
+
+        if(isMohist()) {
+            mohistHermes().onEnable();
+        }
     }
 
     public void onDisable() {
@@ -64,12 +97,14 @@ public class Hermes extends JavaPlugin implements Listener {
             this.adventure.close();
             this.adventure = null;
         }
+        if(isMohist()) {
+            mohistHermes().onDisable();
+        }
     }
 
     private void registerEvents() {
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new MiscEvents(), this);
-        //ServerAPI.registerBukkitEvents(this, this);
+        pm.registerEvents(new ChatEvents(), this);
     }
 
     private void registerCommands() {
@@ -80,7 +115,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
 
 
-    private void registerCommand(String command, CommandExecutor executor) {
+    public void registerCommand(String command, CommandExecutor executor) {
         PluginCommand pluginCommand = getCommand(command);
         if(pluginCommand != null) {
             pluginCommand.setExecutor(executor);
@@ -91,6 +126,10 @@ public class Hermes extends JavaPlugin implements Listener {
                 getServer().getPluginManager().registerEvents((Listener)executor, this);
             }
         }
+    }
+
+    public static boolean isMohist() {
+        return MOHIST_HERMES != null;
     }
 
 

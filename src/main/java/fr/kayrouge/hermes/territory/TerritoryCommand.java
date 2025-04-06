@@ -1,13 +1,17 @@
 package fr.kayrouge.hermes.territory;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
-import fr.kayrouge.hermes.event.MiscEvents;
+import fr.kayrouge.hermes.event.ChatEvents;
+import fr.kayrouge.hermes.mohist.MessageListener;
 import fr.kayrouge.hermes.team.Team;
+import fr.kayrouge.hermes.util.BlockUtils;
 import fr.kayrouge.hermes.util.MessageUtil;
 import fr.kayrouge.hermes.util.Style;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -34,7 +38,7 @@ import java.util.*;
 public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener {
 
     public static final List<String> actionArgs = Arrays.asList(
-            "info", "list", "help", "update", "item", "load", "save");
+            "info", "list", "help", "update", "item", "load", "save", "client");
 
     public static final NamespacedKey TERRITORY_CREATOR_DATA = new NamespacedKey(Hermes.PLUGIN, "creator_data");
 
@@ -43,6 +47,17 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(args.length < 1 || !actionArgs.contains(args[0])) {
             return false;
+        }
+
+        if(args[0].equalsIgnoreCase("client") && commandSender instanceof Player) {
+            Player player = (Player)commandSender;
+            ByteArrayDataOutput out = ByteStreams.newDataOutput();
+            out.writeUTF("client");
+            out.writeInt(10);
+
+            player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
+
+            return true;
         }
 
         if(args[0].equalsIgnoreCase("save")) {
@@ -177,30 +192,36 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
             if(!(commandSender instanceof Player)) return true;
             Player player = (Player)commandSender;
 
-            ItemStack stack = new ItemStack(Material.STICK);
-            ItemMeta meta = stack.getItemMeta();
-            if(meta != null) {
+            ItemStack creatorItem = new ItemStack(Material.STICK);
+            ItemMeta creatorMeta = creatorItem.getItemMeta();
+            if(creatorMeta != null) {
 
-                meta.setDisplayName(Style.getAccentColor()+"Territory Creator");
-                meta.setLore(Arrays.asList(Style.getAccentColor()+"Bottom Left: 0;0",
+                creatorMeta.setDisplayName(Style.getAccentColor()+"Territory Creator");
+                creatorMeta.setLore(Arrays.asList(Style.getAccentColor()+"Bottom Left: 0;0",
                         Style.getAccentColor()+"Top Right: 0;0"));
-                meta.getPersistentDataContainer().set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
+                creatorMeta.getPersistentDataContainer().set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
 
-// TODO move this to a method that will give this item to the player when the game start
-//                meta.setDisplayName(team.getColor()+"Territory Extender");
-//                meta.setLore(Collections.singletonList(team.getColor()+team.getName()));
-//                meta.getPersistentDataContainer().set(STICK_TEAM_DATA, PersistentDataType.STRING, team.getName());
-//
-                stack.setItemMeta(meta);
+                creatorItem.setItemMeta(creatorMeta);
+            }
+
+            ItemStack circleItem = new ItemStack(Material.BLAZE_ROD);
+            ItemMeta circleMeta = circleItem.getItemMeta();
+            if(circleMeta != null) {
+                circleMeta.setDisplayName(Style.getAccentColor()+"Circle Creator");
+                circleMeta.getPersistentDataContainer().set(Hermes.ACTION_ITEM_DATA, PersistentDataType.STRING, "circle");
+
+                circleItem.setItemMeta(circleMeta);
             }
 
 
-            player.getInventory().addItem(stack);
+            player.getInventory().addItem(creatorItem);
+            player.getInventory().addItem(circleItem);
             return true;
         }
 
         return false;
     }
+
 
     @EventHandler
     public void itemUsed(PlayerInteractEvent event) {
@@ -221,7 +242,44 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                 if(pos[4] == 2) {
                     // all coord defined
                     Component component = getCreatorMessageComponent(meta);
-                    MiscEvents.askQuestion(component, player, answer -> {
+                    if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
+                        MessageListener.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+" or create a new territory ?", answer -> {
+                            if(answer.equalsIgnoreCase("reset")) {
+
+                                dataContainer.set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
+
+                                stack.setItemMeta(meta);
+                                player.getEquipment().setItem(hand, updateCreatorLore(stack));
+                            }
+                            else if(answer.startsWith("create")) {
+                                String[] args = answer.split(" ");
+                                if(args.length != 2) {
+                                    player.sendMessage("Please insert a name");
+                                    return;
+                                }
+                                if(args[1].equalsIgnoreCase("cancel")) {
+                                    player.sendMessage("Creation cancelled !");
+                                    return;
+                                }
+                                StringBuilder territoryName = new StringBuilder();
+                                for(int i = 1; i < args.length; i++) {
+                                    territoryName.append(args[i]);
+                                }
+
+                                TerritoryManager territoryManager = TerritoryManager.create(territoryName.toString(), player.getWorld(),
+                                        pos[0], pos[1], pos[2], pos[3]);
+
+                                if(territoryManager == null) {
+                                    player.sendMessage("Invalid size !");
+                                }
+                                else {
+                                    player.sendMessage("Created: "+territoryName);
+                                }
+                            }
+                        }, Choice.of("reset"), Choice.of("create", Choice.Type.TEXT_ENTRY));
+                        return;
+                    }
+                    ChatEvents.askChatQuestion(component, player, answer -> {
                         if(answer.equalsIgnoreCase("reset")) {
 
                             dataContainer.set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
@@ -270,6 +328,11 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                 stack.setItemMeta(meta);
                 player.getEquipment().setItem(hand, updateCreatorLore(stack));
 
+            } else if(dataContainer.has(Hermes.ACTION_ITEM_DATA, PersistentDataType.STRING)) {
+                if(dataContainer.get(Hermes.ACTION_ITEM_DATA, PersistentDataType.STRING).equalsIgnoreCase("circle")) {
+                    BlockUtils.createCircle(player.getLocation().add(0, -3, 0), 8, Material.SAND, player);
+
+                }
             }
 
 // TODO

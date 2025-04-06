@@ -1,0 +1,15 @@
+S2C:
+UTF -> "question" -> channel
+UTF -> var -> question
+Int -> var -> question id
+Int -> choices.length -> number of choices
+
+loop Choices choices : choices
+	UTF -> choices.name -> Choice name
+	Int -> choices.type.getId() -> Choice type
+
+
+C2S:
+UTF -> "answer" -> channel
+Int -> var -> questionId
+String -> var -> answer

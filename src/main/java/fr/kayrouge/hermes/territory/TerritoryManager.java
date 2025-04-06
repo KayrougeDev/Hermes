@@ -1,9 +1,8 @@
 package fr.kayrouge.hermes.territory;
 
-import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.team.Team;
 import fr.kayrouge.hermes.team.TeamColorMapper;
-import fr.kayrouge.hermes.util.FakeBlockUtils;
+import fr.kayrouge.hermes.util.BlockUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,9 +20,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class TerritoryManager {
-
-    // TODO Dynamically create TerritoryManager in Minecraft with a special item (user select 2 corner),
-    // TODO saved in a file (multiple territory allowed on 1 world)
 
     // TODO one game per territory, players can join/spec game
     // TODO player can expand their territory
@@ -111,7 +107,6 @@ public class TerritoryManager {
         return xSize > 0 && ySize > 0;
     }
 
-    // Capture un bloc (sans Y)
     public void captureBlock(int x, int z, Team team) {
         String chunkKey = (x >> 4) + "," + (z >> 4);
         int blockXZ = ((x & 15) << 4) | (z & 15); // Stocke X et Z dans un seul int
@@ -128,12 +123,10 @@ public class TerritoryManager {
             }
         }
 
-        // Ajouter le bloc dans la bonne équipe
         territoryBlocks.putIfAbsent(chunkKey, new HashMap<>());
         territoryBlocks.get(chunkKey).putIfAbsent(team.getName(), new HashSet<>());
         territoryBlocks.get(chunkKey).get(team.getName()).add(blockXZ);
 
-        // Vérifier si tout le chunk est capturé par une seule équipe
         checkChunkCapture(chunkKey);
 
         Block highestBlock = world.getHighestBlockAt(x, z);
@@ -145,7 +138,7 @@ public class TerritoryManager {
         }
 
         Bukkit.getOnlinePlayers().forEach(player -> {
-            FakeBlockUtils.sendFakeBlock(
+            BlockUtils.sendFakeBlock(
                     player,
                     new Location(world, x, highestBlock.getY(), z),
                     material
@@ -154,12 +147,10 @@ public class TerritoryManager {
     }
 
 
-    // Vérifie si un chunk est totalement conquis
     private void checkChunkCapture(String chunkKey) {
         HashMap<String, Set<Integer>> teamsBlocks = territoryBlocks.get(chunkKey);
         if (teamsBlocks == null || teamsBlocks.isEmpty()) return;
 
-        // Vérifier si une équipe a capturé tous les blocs du chunk (16x16 = 256 blocs)
         for (String teamName : teamsBlocks.keySet()) {
             if(!Team.getTeams().containsKey(teamName)) continue;
             Team team = Team.getTeam(teamName);
@@ -194,7 +185,7 @@ public class TerritoryManager {
                     material = TeamColorMapper.getMaterialFromColor(team.getColor());
                 }
 
-                Bukkit.getOnlinePlayers().forEach(player -> FakeBlockUtils.sendFakeBlock(player, location, material));
+                Bukkit.getOnlinePlayers().forEach(player -> BlockUtils.sendFakeBlock(player, location, material));
             }
         }
     }
@@ -204,8 +195,6 @@ public class TerritoryManager {
             updateAllBlocks(team);
         });
     }
-
-
 
     public Team getBlockOwner(int x, int z) {
         String chunkKey = (x >> 4) + "," + (z >> 4);
@@ -222,8 +211,6 @@ public class TerritoryManager {
                 return team;
             }
         }
-
-
 
         return Team.NEUTRAL;
     }

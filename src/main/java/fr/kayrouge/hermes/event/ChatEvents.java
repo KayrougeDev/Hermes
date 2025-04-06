@@ -13,7 +13,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class MiscEvents implements Listener {
+public class ChatEvents implements Listener {
 
     public static final HashMap<UUID, IQuestion> QUESTIONS = new HashMap<>();
 
@@ -37,10 +37,9 @@ public class MiscEvents implements Listener {
         });
     }
 
-    public static void askQuestion(Component message, Player player, IQuestion question) {
+    public static void askChatQuestion(Component message, Player player, IQuestion question) {
         Hermes.PLUGIN.adventure().player(player).sendMessage(message);
         QUESTIONS.put(player.getUniqueId(), question);
-
     }
 
 

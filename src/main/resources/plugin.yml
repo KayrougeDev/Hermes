@@ -15,3 +15,5 @@ commands:
   teams:
     permission: hermes.commands.teams
     usage: /teams help
+  question:
+    usage: /question

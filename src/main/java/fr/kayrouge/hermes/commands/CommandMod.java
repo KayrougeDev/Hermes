@@ -48,26 +48,11 @@ public class CommandMod implements CommandExecutor, TabCompleter, Listener {
         if(event.getView().getTitle().endsWith("'s inventory") && event.getView().getTitle().contains(Style.getColor().toString())) {
             if(event.getInventory().getHolder() instanceof Player) {
                 Player target = (Player)event.getInventory().getHolder();
-                Hermes.LOGGER.info("START INVSEE DEBUG");
-
-                for(ItemStack stack : target.getInventory().getContents()) {
-                    if(stack != null && stack.getItemMeta() != null) {
-                        Hermes.LOGGER.info(stack.getType().toString());
-                    }
-                }
-                Hermes.LOGGER.info("END");
 
                 ItemStack[] resizedSizeEventInv = Arrays.copyOfRange(event.getInventory().getContents(), 0, Math.min(event.getInventory().getContents().length, target.getInventory().getContents().length));
 
                 target.getInventory().setContents(resizedSizeEventInv);
                 target.updateInventory();
-
-                for(ItemStack stack : target.getInventory().getContents()) {
-                    if(stack != null && stack.getItemMeta() != null) {
-                        Hermes.LOGGER.info(stack.getType().toString());
-                    }
-                }
-                Hermes.LOGGER.info("END 2");
             }
         }
     }
@@ -75,11 +60,6 @@ public class CommandMod implements CommandExecutor, TabCompleter, Listener {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1) {
-            List<String> playerList = new ArrayList<>();
-            Bukkit.getOnlinePlayers().forEach(player -> playerList.add(player.getName()));
-            return playerList;
-        }
-        return Collections.emptyList();
+        return null;
     }
 }
