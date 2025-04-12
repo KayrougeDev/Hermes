@@ -5,6 +5,8 @@ import com.google.common.io.ByteStreams;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hera.Hera;
 import fr.kayrouge.hermes.Hermes;
+import net.minecraftforge.common.MinecraftForge;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +17,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class MessageListener implements PluginMessageListener {
+public class PacketListeners implements PluginMessageListener {
 
     private static final Map<UUID, Map<Integer, Consumer<String>>> playerQuestions = new HashMap<>();
 
@@ -67,7 +69,7 @@ public class MessageListener implements PluginMessageListener {
                     player.sendMessage("Hera outdated, please update Hestia");
                 }
                 else {
-                    player.kickPlayer("Hera version ("+clientHera+") don't exist, please update Hestia");
+                    player.kickPlayer("This Hera version ("+clientHera+") don't exist, please update Hestia");
                 }
             }
             Hermes.LOGGER.info(sousCanal);

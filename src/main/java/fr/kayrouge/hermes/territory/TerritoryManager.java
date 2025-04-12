@@ -1,5 +1,6 @@
 package fr.kayrouge.hermes.territory;
 
+import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.team.Team;
 import fr.kayrouge.hermes.team.TeamColorMapper;
 import fr.kayrouge.hermes.util.BlockUtils;
@@ -25,7 +26,7 @@ public class TerritoryManager {
     // TODO player can expand their territory
     private static final HashMap<String, TerritoryManager> territoryManagers = new HashMap<>();
 
-    public static final File TERRITORIES_FILE = new File("territories.yml");
+    public static final File TERRITORIES_FILE = new File(Hermes.PLUGIN.getDataFolder(), "territories.yml");
 
     private final HashMap<String, String> territoryChunks = new HashMap<>(); // Chunk conquis ("chunkX,chunkZ" -> team)
     private final HashMap<String, HashMap<String, Set<Integer>>> territoryBlocks = new HashMap<>(); // Chunks contestés ("chunkX,chunkZ" -> Map<team, Set<blocXZ>>)
@@ -215,6 +216,11 @@ public class TerritoryManager {
         return Team.NEUTRAL;
     }
 
+    public void reset() {
+        territoryBlocks.clear();
+        territoryChunks.clear();
+    }
+
     public int getXSize() {
         return xSize;
     }
@@ -229,6 +235,19 @@ public class TerritoryManager {
 
     public World getWorld() {
         return world;
+    }
+
+    public Location getCenter() {
+        return world.getHighestBlockAt((bottomLeftX + topRightX) / 2, (bottomLeftY+topRightY)/2).getLocation().add(0, 1, 0);
+    }
+
+
+    public boolean isBlockInTerritory(int x, int z) {
+        int minX = Math.min(bottomLeftX, topRightX);
+        int maxX = Math.max(bottomLeftX, topRightX);
+        int minY = Math.min(bottomLeftY, topRightY);
+        int maxY = Math.max(bottomLeftY, topRightY);
+        return x >= minX && x <= maxX && z >= minY && z <= maxY;
     }
 
     public static HashMap<String, TerritoryManager> getTerritoryManagers() {

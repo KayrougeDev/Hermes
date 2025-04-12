@@ -5,7 +5,7 @@ import com.google.common.io.ByteStreams;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.event.ChatEvents;
-import fr.kayrouge.hermes.mohist.MessageListener;
+import fr.kayrouge.hermes.mohist.PacketListeners;
 import fr.kayrouge.hermes.team.Team;
 import fr.kayrouge.hermes.util.BlockUtils;
 import fr.kayrouge.hermes.util.MessageUtil;
@@ -38,7 +38,7 @@ import java.util.*;
 public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener {
 
     public static final List<String> actionArgs = Arrays.asList(
-            "info", "list", "help", "update", "item", "load", "save", "client");
+            "info", "list", "help", "update", "item", "load", "save");
 
     public static final NamespacedKey TERRITORY_CREATOR_DATA = new NamespacedKey(Hermes.PLUGIN, "creator_data");
 
@@ -47,17 +47,6 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(args.length < 1 || !actionArgs.contains(args[0])) {
             return false;
-        }
-
-        if(args[0].equalsIgnoreCase("client") && commandSender instanceof Player) {
-            Player player = (Player)commandSender;
-            ByteArrayDataOutput out = ByteStreams.newDataOutput();
-            out.writeUTF("client");
-            out.writeInt(10);
-
-            player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
-
-            return true;
         }
 
         if(args[0].equalsIgnoreCase("save")) {
@@ -243,7 +232,7 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                     // all coord defined
                     Component component = getCreatorMessageComponent(meta);
                     if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
-                        MessageListener.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+" or create a new territory ?", answer -> {
+                        PacketListeners.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+" or create a new territory ?", answer -> {
                             if(answer.equalsIgnoreCase("reset")) {
 
                                 dataContainer.set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);

@@ -1,6 +1,8 @@
 package fr.kayrouge.hermes;
 
+import fr.kayrouge.dionysios.GameManager;
 import fr.kayrouge.hermes.commands.CommandMod;
+import fr.kayrouge.hermes.commands.CommandTest;
 import fr.kayrouge.hermes.event.ChatEvents;
 import fr.kayrouge.hermes.mohist.MHermes;
 import fr.kayrouge.hermes.team.TeamsCommand;
@@ -25,6 +27,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
     public static Hermes PLUGIN;
     public static Logger LOGGER;
+    private static GameManager gameManager;
 
     private static @Nullable MHermes MOHIST_HERMES;
 
@@ -46,10 +49,14 @@ public class Hermes extends JavaPlugin implements Listener {
         return MOHIST_HERMES;
     }
 
+    @Override
+    public void onLoad() {
+        PLUGIN = this;
+    }
 
     @Override
     public void onEnable() {
-        PLUGIN = this;
+        gameManager = new GameManager(this);
         LOGGER = PLUGIN.getLogger();
         boolean isMohistServer;
         try {
@@ -89,6 +96,7 @@ public class Hermes extends JavaPlugin implements Listener {
         if(isMohist()) {
             mohistHermes().onEnable();
         }
+        LOGGER.info(TerritoryManager.TERRITORIES_FILE.toString());
     }
 
     public void onDisable() {
@@ -111,6 +119,7 @@ public class Hermes extends JavaPlugin implements Listener {
         registerCommand("invsee", new CommandMod());
         registerCommand("territory", new TerritoryCommand());
         registerCommand("teams", new TeamsCommand());
+        registerCommand("game", new CommandTest());
     }
 
 
@@ -132,7 +141,9 @@ public class Hermes extends JavaPlugin implements Listener {
         return MOHIST_HERMES != null;
     }
 
-
+    public static GameManager getGameManager() {
+        return gameManager;
+    }
 
     //    @EventHandler
 //    public void onTest(final BukkitHookForgeEvent e) {

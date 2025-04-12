@@ -1,9 +1,13 @@
 package fr.kayrouge.hermes.commands;
 
+import fr.kayrouge.dionysios.Game;
+import fr.kayrouge.dionysios.GameSettings;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
+import fr.kayrouge.hermes.game.TerritoryGame;
 import fr.kayrouge.hermes.mohist.MHermes;
-import fr.kayrouge.hermes.mohist.MessageListener;
+import fr.kayrouge.hermes.mohist.PacketListeners;
+import fr.kayrouge.hermes.territory.TerritoryManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -30,11 +34,35 @@ public class CommandTest implements CommandExecutor {
                 });
 
                 if(mHermes.communicationAvailable(player)) {
-                    MessageListener.createAndSendQuestion(player, "Marche stp", s -> {
+                    PacketListeners.createAndSendQuestion(player, "Marche stp", s -> {
                         Hermes.LOGGER.info(s);
                     }, Choice.of("cancel"), Choice.of("texte moi", Choice.Type.TEXT_ENTRY));
                 }
             }
+            return true;
+        }
+
+        if(label.equalsIgnoreCase("game")) {
+            if(!(commandSender instanceof Player)) return true;
+            Player player = (Player)commandSender;
+
+            String territoryName = "test";
+            if(args.length > 0) {
+                territoryName = args[0];
+            }
+            Game game;
+            if(Hermes.getGameManager().getGames().isEmpty()) {
+                GameSettings settings = new GameSettings().setMinPlayerToStopGame(1)
+                        .setTimeToTerminate(25L).setTpAfterGameTerminated(false);
+                game = Hermes.getGameManager().createGame(new TerritoryGame(Hermes.getGameManager(), settings, TerritoryManager.getTerritoryManagers().get(territoryName)));
+            }
+            else {
+                game = Hermes.getGameManager().getGames().values().iterator().next();
+            }
+
+            game.playerJoin(player, false);
+
+            return true;
         }
 
         return false;
