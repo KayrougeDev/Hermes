@@ -94,7 +94,9 @@ public class TerritoryGame extends Game {
         if(team != Team.NEUTRAL) {
             Team.getTeams().remove(team.getName());
         }
-        player.getInventory().setContents(playersInventory.get(player));
+        if(playersInventory.containsKey(player)) {
+            player.getInventory().setContents(playersInventory.get(player));
+        }
     }
 
     @Override
