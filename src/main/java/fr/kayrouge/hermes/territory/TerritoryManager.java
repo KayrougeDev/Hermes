@@ -11,14 +11,12 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TerritoryManager {
 
@@ -129,22 +127,6 @@ public class TerritoryManager {
         territoryBlocks.get(chunkKey).get(team.getName()).add(blockXZ);
 
         checkChunkCapture(chunkKey);
-
-        Block highestBlock = world.getHighestBlockAt(x, z);
-        Material material;
-        if (team.equals(Team.NEUTRAL)) {
-            material = highestBlock.getType();
-        } else {
-            material = TeamColorMapper.getMaterialFromColor(team.getColor());
-        }
-
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            BlockUtils.sendFakeBlock(
-                    player,
-                    new Location(world, x, highestBlock.getY(), z),
-                    material
-            );
-        });
     }
 
 
@@ -163,7 +145,7 @@ public class TerritoryManager {
         }
     }
 
-    public void updateAllBlocks(Team team) {
+    public void updateAllBlocks(Team team, List<Player> players) {
         for (String chunkKey : territoryBlocks.keySet()) {
             HashMap<String, Set<Integer>> teamsBlocks = territoryBlocks.get(chunkKey);
             if (teamsBlocks == null || !teamsBlocks.containsKey(team.getName())) continue;
@@ -186,14 +168,14 @@ public class TerritoryManager {
                     material = TeamColorMapper.getMaterialFromColor(team.getColor());
                 }
 
-                Bukkit.getOnlinePlayers().forEach(player -> BlockUtils.sendFakeBlock(player, location, material));
+                players.forEach(player -> BlockUtils.sendFakeBlock(player, location, material));
             }
         }
     }
 
-    public void updateBlocksForAllTeam() {
+    public void updateBlocksForAllTeam(List<Player> players) {
         Team.getTeams().forEach((s, team) -> {
-            updateAllBlocks(team);
+            updateAllBlocks(team, players);
         });
     }
 

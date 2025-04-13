@@ -15,6 +15,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class CommandTest implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
@@ -52,15 +54,16 @@ public class CommandTest implements CommandExecutor {
             }
             Game game;
             if(Hermes.getGameManager().getGames().isEmpty()) {
-                GameSettings settings = new GameSettings().setMinPlayerToStopGame(1)
-                        .setTimeToTerminate(25L).setTpAfterGameTerminated(false);
+                GameSettings settings = new GameSettings()
+                        .setMinPlayerCount(Bukkit.getServer().getOnlinePlayers().size())
+                        .setMinPlayerToStopGame(1);
                 game = Hermes.getGameManager().createGame(new TerritoryGame(Hermes.getGameManager(), settings, TerritoryManager.getTerritoryManagers().get(territoryName)));
             }
             else {
                 game = Hermes.getGameManager().getGames().values().iterator().next();
             }
 
-            game.playerJoin(player, false);
+            game.playerJoin(player, new AtomicBoolean());
 
             return true;
         }

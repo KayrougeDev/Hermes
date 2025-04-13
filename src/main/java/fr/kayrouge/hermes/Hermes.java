@@ -58,17 +58,20 @@ public class Hermes extends JavaPlugin implements Listener {
     public void onEnable() {
         gameManager = new GameManager(this);
         LOGGER = PLUGIN.getLogger();
+        gameManager.setAfterGameLocation(Bukkit.getWorlds().get(0).getSpawnLocation());
+
         boolean isMohistServer;
         try {
             Class.forName("com.mohistmc.MohistMC");
             isMohistServer =  true;
-
         } catch (ClassNotFoundException e) {
             isMohistServer = false;
         }
+
         if(isMohistServer) {
             MOHIST_HERMES = new MHermes(this);
         }
+
         ACTION_ITEM_DATA = new NamespacedKey(PLUGIN, "action_item");
 
         this.adventure = BukkitAudiences.create(this);
@@ -83,11 +86,6 @@ public class Hermes extends JavaPlugin implements Listener {
         }
         Bukkit.getLogger().info(Style.getASCIILine());
 
-        getConfig().options().copyDefaults(true);
-        saveConfig();
-        saveDefaultConfig();
-        reloadConfig();
-
         TerritoryManager.load();
 
         registerEvents();
@@ -96,7 +94,6 @@ public class Hermes extends JavaPlugin implements Listener {
         if(isMohist()) {
             mohistHermes().onEnable();
         }
-        LOGGER.info(TerritoryManager.TERRITORIES_FILE.toString());
     }
 
     public void onDisable() {
