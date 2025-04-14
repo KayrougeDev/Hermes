@@ -12,6 +12,7 @@ import fr.kayrouge.hermes.util.MessageUtil;
 import fr.kayrouge.hermes.util.Style;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -229,33 +230,26 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                 int[] pos = dataContainer.get(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY);
                 if(pos == null || pos.length < 5) return;
                 if(pos[4] == 2) {
-                    // all coord defined
                     Component component = getCreatorMessageComponent(meta);
                     if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
-                        PacketListeners.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+" or create a new territory ?", answer -> {
-                            if(answer.equalsIgnoreCase("reset")) {
+                        PacketListeners.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+ ChatColor.WHITE +" or create a new territory ?", (choiceName, questionId, data) ->  {
+                            if(choiceName.equalsIgnoreCase("cancel")) {
+                                player.sendMessage("Creation cancelled !");
+                            } else if(choiceName.equalsIgnoreCase("reset")) {
 
                                 dataContainer.set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
 
                                 stack.setItemMeta(meta);
                                 player.getEquipment().setItem(hand, updateCreatorLore(stack));
                             }
-                            else if(answer.startsWith("create")) {
-                                String[] args = answer.split(" ");
-                                if(args.length != 2) {
-                                    player.sendMessage("Please insert a name");
+                            else if(choiceName.equalsIgnoreCase("create")) {
+                                if(!(data instanceof String)) {
+                                    player.sendMessage("Name not valid, retry later or update Hestia");
                                     return;
                                 }
-                                if(args[1].equalsIgnoreCase("cancel")) {
-                                    player.sendMessage("Creation cancelled !");
-                                    return;
-                                }
-                                StringBuilder territoryName = new StringBuilder();
-                                for(int i = 1; i < args.length; i++) {
-                                    territoryName.append(args[i]);
-                                }
+                                String territoryName = (String) data;
 
-                                TerritoryManager territoryManager = TerritoryManager.create(territoryName.toString(), player.getWorld(),
+                                TerritoryManager territoryManager = TerritoryManager.create(territoryName, player.getWorld(),
                                         pos[0], pos[1], pos[2], pos[3]);
 
                                 if(territoryManager == null) {
@@ -265,7 +259,7 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                                     player.sendMessage("Created: "+territoryName);
                                 }
                             }
-                        }, Choice.of("reset"), Choice.of("create", Choice.Type.TEXT_ENTRY));
+                        }, Choice.of("cancel"), Choice.of("reset"), Choice.of("create", Choice.Type.TEXT_ENTRY));
                         return;
                     }
                     ChatEvents.askChatQuestion(component, player, answer -> {
@@ -280,13 +274,16 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                         }
                         else if(answer.startsWith("create")) {
                             String[] args = answer.split(" ");
-                            if(args.length != 2) {
-                                player.sendMessage("Please insert a name (without space)");
+                            if(args.length < 2) {
+                                player.sendMessage("Please insert a name");
                                 return true;
                             }
-                            String territoryName = args[1];
+                            StringBuilder territoryName = new StringBuilder();
+                            for (int i = 1; i < args.length; i++) {
+                                territoryName.append(args[i]);
+                            }
 
-                            TerritoryManager territoryManager = TerritoryManager.create(territoryName, player.getWorld(),
+                            TerritoryManager territoryManager = TerritoryManager.create(territoryName.toString(), player.getWorld(),
                                     pos[0], pos[1], pos[2], pos[3]);
 
                             if(territoryManager == null) {

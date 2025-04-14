@@ -13,3 +13,6 @@ C2S:
 UTF -> "answer" -> channel
 Int -> var -> questionId
 String -> var -> answer
+Byte -> var -> dataType
+if Byte != 0 (no data to send)
+    var -> var -> data

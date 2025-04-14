@@ -4,12 +4,12 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hera.Hera;
+import fr.kayrouge.hera.PacketUtils;
 import fr.kayrouge.hermes.Hermes;
-import net.minecraftforge.common.MinecraftForge;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -19,21 +19,21 @@ import java.util.function.Consumer;
 
 public class PacketListeners implements PluginMessageListener {
 
-    private static final Map<UUID, Map<Integer, Consumer<String>>> playerQuestions = new HashMap<>();
+    private static final Map<UUID, Map<Integer, IHestiaQuestion>> playerQuestions = new HashMap<>();
 
 
-    public static void createAndSendQuestion(Player player, String question, Consumer<String> consumer, Choice... choices) {
+    public static void createAndSendQuestion(Player player, String questionName, IHestiaQuestion question, Choice... choices) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("question");
-        out.writeUTF(question);
+        out.writeUTF(questionName);
         int id = 0;
         playerQuestions.putIfAbsent(player.getUniqueId(), new HashMap<>());
-        Map<Integer, Consumer<String>> playerQuestion = playerQuestions.get(player.getUniqueId());
+        Map<Integer, IHestiaQuestion> playerQuestion = playerQuestions.get(player.getUniqueId());
         Optional<Integer> idOptional = playerQuestion.keySet().stream().max(Integer::compareTo);
         if(idOptional.isPresent()) {
             id = idOptional.get()+1;
         }
-        playerQuestion.putIfAbsent(id, consumer);
+        playerQuestion.putIfAbsent(id, question);
         out.writeInt(id);
         out.writeInt(choices.length);
 
@@ -42,6 +42,10 @@ public class PacketListeners implements PluginMessageListener {
         }
 
         player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
+    }
+
+    public static void removeQuestion(Player player, int id) {
+        playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).remove(id);
     }
 
     @Override
@@ -53,9 +57,11 @@ public class PacketListeners implements PluginMessageListener {
             String sousCanal = in.readUTF();
             if (sousCanal.equals("answer")) {
                 int id = in.readInt();
-                Consumer<String> question = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
+                String choiceName = in.readUTF();
+                IHestiaQuestion question = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
+                Object data = PacketUtils.readObject(in);
                 if(question != null) {
-                    question.accept(in.readUTF());
+                    question.answer(choiceName, id, data);
                 }
                 else {
                     player.sendMessage("Error with the answer, please retry");
@@ -72,7 +78,6 @@ public class PacketListeners implements PluginMessageListener {
                     player.kickPlayer("This Hera version ("+clientHera+") don't exist, please update Hestia");
                 }
             }
-            Hermes.LOGGER.info(sousCanal);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,6 +85,6 @@ public class PacketListeners implements PluginMessageListener {
 
     @FunctionalInterface
     public interface IHestiaQuestion {
-        void answer();
+        void answer(String choiceName, int questionId, @Nullable Object data);
     }
 }

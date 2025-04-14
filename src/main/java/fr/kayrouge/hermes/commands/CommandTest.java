@@ -36,8 +36,12 @@ public class CommandTest implements CommandExecutor {
                 });
 
                 if(mHermes.communicationAvailable(player)) {
-                    PacketListeners.createAndSendQuestion(player, "Marche stp", s -> {
-                        Hermes.LOGGER.info(s);
+                    PacketListeners.createAndSendQuestion(player, "Marche stp", (choiceName, questionId, data) -> {
+                        if(data == null) {
+                            data = "NULL";
+                        }
+                        Hermes.LOGGER.info(choiceName +" "+questionId+" "+data);
+                        PacketListeners.removeQuestion(player, questionId);
                     }, Choice.of("cancel"), Choice.of("texte moi", Choice.Type.TEXT_ENTRY));
                 }
             }
