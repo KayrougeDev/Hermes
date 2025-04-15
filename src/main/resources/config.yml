@@ -1,0 +1,9 @@
+hermes:
+  displayAscii: true
+
+mHermes:
+  customQuestionGUI: true
+
+territory:
+  # Automatically save a territory file after being added/removed
+  autoSave: true

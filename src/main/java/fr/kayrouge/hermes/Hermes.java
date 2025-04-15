@@ -3,6 +3,7 @@ package fr.kayrouge.hermes;
 import fr.kayrouge.dionysios.GameManager;
 import fr.kayrouge.hermes.commands.CommandMod;
 import fr.kayrouge.hermes.commands.CommandTest;
+import fr.kayrouge.hermes.config.HermesConfig;
 import fr.kayrouge.hermes.event.ChatEvents;
 import fr.kayrouge.hermes.mohist.MHermes;
 import fr.kayrouge.hermes.team.TeamsCommand;
@@ -56,8 +57,10 @@ public class Hermes extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveConfig();
+        getConfig().options().copyDefaults(true);
         gameManager = new GameManager(this);
-        LOGGER = PLUGIN.getLogger();
+        LOGGER = this.getLogger();
         gameManager.setAfterGameLocation(Bukkit.getWorlds().get(0).getSpawnLocation());
 
         boolean isMohistServer;
@@ -80,14 +83,15 @@ public class Hermes extends JavaPlugin implements Listener {
             LOGGER.info("Server running on mohist !");
         }
 
-        Bukkit.getLogger().info(Style.getASCIILine());
-        for(String s : Style.getASCIILogo().split("\n")) {
-            Bukkit.getLogger().info(Style.getColor()+s);
+        if(HermesConfig.displayAscii) {
+            Bukkit.getLogger().info(Style.getASCIILine());
+            for(String s : Style.getASCIILogo().split("\n")) {
+                Bukkit.getLogger().info(Style.getColor()+s);
+            }
+            Bukkit.getLogger().info(Style.getASCIILine());
         }
-        Bukkit.getLogger().info(Style.getASCIILine());
 
         TerritoryManager.load();
-
         registerEvents();
         registerCommands();
 

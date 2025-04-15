@@ -1,9 +1,8 @@
 package fr.kayrouge.hermes.territory;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
+import fr.kayrouge.hermes.config.TerritoryConfig;
 import fr.kayrouge.hermes.event.ChatEvents;
 import fr.kayrouge.hermes.mohist.PacketListeners;
 import fr.kayrouge.hermes.team.Team;
@@ -39,7 +38,7 @@ import java.util.*;
 public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener {
 
     public static final List<String> actionArgs = Arrays.asList(
-            "info", "list", "help", "update", "item", "load", "save");
+            "info", "list", "help", "item", "load", "save", "remove");
 
     public static final NamespacedKey TERRITORY_CREATOR_DATA = new NamespacedKey(Hermes.PLUGIN, "creator_data");
 
@@ -62,6 +61,27 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
             TerritoryManager.load();
             commandSender.sendMessage("Territories loaded");
             return true;
+        }
+
+        if(args[0].equalsIgnoreCase("remove")) {
+            if(args.length < 2) {
+                commandSender.sendMessage("Not enough args");
+                return false;
+            }
+            StringBuilder name = new StringBuilder();
+            for(int i = 1; i < args.length; i++) {
+                name.append(i);
+            }
+
+            if(TerritoryManager.getTerritoryManagers().remove(name.toString()) == null) {
+                commandSender.sendMessage("This territory don't exist");
+            }
+            else {
+                commandSender.sendMessage("Successfully removed " + name);
+                if(TerritoryConfig.autoSave) {
+                    TerritoryManager.save();
+                }
+            }
         }
 
         if(args[0].equalsIgnoreCase("list")) {
@@ -157,25 +177,6 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
 //            commandSender.sendMessage(s);
         }
 
-        if(args[0].equalsIgnoreCase("update")) {
-            if(!(commandSender instanceof Player)) return true;
-            Player player = (Player)commandSender;
-
-            //TerritoryManager territory = Hermes.getTerritoryManager();
-
-            int x = player.getLocation().getBlockX();
-            int z = player.getLocation().getBlockZ();
-
-            //Team team = territory.getBlockOwner(x, z);
-
-            //Hermes.getTerritoryManager().updateBlock(x, z, player.getWorld(), team);
-
-            //FakeBlockUtils.sendFakeBlock(player, player.getLocation().add(0, -1, 0), TeamColorMapper.getMaterialFromColor(team.getColor()));
-
-            // TODO
-            commandSender.sendMessage(MessageUtil.COMMAND_DISABLED);
-            return false;
-        }
 
 
         if(args[0].equalsIgnoreCase("item")) {
@@ -233,18 +234,17 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                     Component component = getCreatorMessageComponent(meta);
                     if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
                         PacketListeners.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+ ChatColor.WHITE +" or create a new territory ?", (choiceName, questionId, data) ->  {
+                            PacketListeners.removeQuestion(player, questionId);
                             if(choiceName.equalsIgnoreCase("cancel")) {
                                 player.sendMessage("Creation cancelled !");
                             } else if(choiceName.equalsIgnoreCase("reset")) {
-
                                 dataContainer.set(TERRITORY_CREATOR_DATA, PersistentDataType.INTEGER_ARRAY, new int[5]);
-
                                 stack.setItemMeta(meta);
                                 player.getEquipment().setItem(hand, updateCreatorLore(stack));
                             }
                             else if(choiceName.equalsIgnoreCase("create")) {
                                 if(!(data instanceof String)) {
-                                    player.sendMessage("Name not valid, retry later or update Hestia");
+                                    player.sendMessage("Name not valid, retry or update Hestia");
                                     return;
                                 }
                                 String territoryName = (String) data;
@@ -257,6 +257,9 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                                 }
                                 else {
                                     player.sendMessage("Created: "+territoryName);
+                                    if(TerritoryConfig.autoSave) {
+                                        TerritoryManager.save();
+                                    }
                                 }
                             }
                         }, Choice.of("cancel"), Choice.of("reset"), Choice.of("create", Choice.Type.TEXT_ENTRY));
@@ -291,6 +294,9 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                             }
                             else {
                                 player.sendMessage("Created: "+territoryName);
+                                if(TerritoryConfig.autoSave) {
+                                    TerritoryManager.save();
+                                }
                             }
 
                             return true;
