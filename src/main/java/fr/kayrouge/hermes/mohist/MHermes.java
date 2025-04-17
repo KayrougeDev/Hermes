@@ -16,19 +16,21 @@ import org.bukkit.plugin.PluginManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class MHermes implements Listener {
 
     private final Hermes plugin;
-
+    private final Logger LOGGER;
     private final List<UUID> communicationList = new ArrayList<>();
 
     public MHermes(Hermes plugin) {
         this.plugin = plugin;
+        this.LOGGER = plugin.LOGGER;
     }
 
     public void onEnable() {
-        Hermes.LOGGER.info("Enabling MHermes");
+        LOGGER.info("Enabling MHermes");
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "hermes:hestia");
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new PacketListeners());
         registerEvents();
@@ -37,7 +39,7 @@ public class MHermes implements Listener {
     }
 
     public void onDisable() {
-        Hermes.LOGGER.info("Disabling MHermes");
+        LOGGER.info("Disabling MHermes");
         plugin.getServer().getMessenger().unregisterOutgoingPluginChannel(plugin);
         plugin.getServer().getMessenger().unregisterIncomingPluginChannel(plugin);
     }

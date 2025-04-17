@@ -57,8 +57,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        saveConfig();
-        getConfig().options().copyDefaults(true);
+        saveDefaultConfig();
         gameManager = new GameManager(this);
         LOGGER = this.getLogger();
         gameManager.setAfterGameLocation(Bukkit.getWorlds().get(0).getSpawnLocation());

@@ -1,6 +1,5 @@
 package fr.kayrouge.hermes.commands;
 
-import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.util.Style;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;

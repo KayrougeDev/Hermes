@@ -2,6 +2,7 @@ package fr.kayrouge.hermes.territory;
 
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
+import fr.kayrouge.hermes.config.MHermesConfig;
 import fr.kayrouge.hermes.config.TerritoryConfig;
 import fr.kayrouge.hermes.event.ChatEvents;
 import fr.kayrouge.hermes.mohist.PacketListeners;
@@ -232,7 +233,7 @@ public class TerritoryCommand implements CommandExecutor, TabCompleter, Listener
                 if(pos == null || pos.length < 5) return;
                 if(pos[4] == 2) {
                     Component component = getCreatorMessageComponent(meta);
-                    if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
+                    if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player) && MHermesConfig.customQuestionGUI) {
                         PacketListeners.createAndSendQuestion(player, "Do you want to reset this "+ meta.getDisplayName()+ ChatColor.WHITE +" or create a new territory ?", (choiceName, questionId, data) ->  {
                             PacketListeners.removeQuestion(player, questionId);
                             if(choiceName.equalsIgnoreCase("cancel")) {
