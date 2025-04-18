@@ -120,6 +120,7 @@ public class Hermes extends JavaPlugin implements Listener {
         registerCommand("territory", new TerritoryCommand());
         registerCommand("teams", new TeamsCommand());
         registerCommand("game", new CommandTest());
+        registerCommand("question", new CommandTest());
     }
 
 

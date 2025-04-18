@@ -32,10 +32,8 @@ public class MHermes implements Listener {
     public void onEnable() {
         LOGGER.info("Enabling MHermes");
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "hermes:hestia");
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new PacketListeners());
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new MQuestionHandlers());
         registerEvents();
-
-        plugin.registerCommand("question", new CommandTest());
     }
 
     public void onDisable() {

@@ -6,29 +6,28 @@ import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hera.Hera;
 import fr.kayrouge.hera.PacketUtils;
 import fr.kayrouge.hermes.Hermes;
+import fr.kayrouge.hermes.event.ChatEvents;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
 
-public class PacketListeners implements PluginMessageListener {
+public class MQuestionHandlers implements PluginMessageListener {
 
-    private static final Map<UUID, Map<Integer, IHestiaQuestion>> playerQuestions = new HashMap<>();
+    private static final Map<UUID, Map<Integer, ChatEvents.IQuestion>> playerQuestions = new HashMap<>();
 
 
-    public static void createAndSendQuestion(Player player, String questionName, IHestiaQuestion question, Choice... choices) {
+    public static void createAndSendQuestion(Player player, String questionName, ChatEvents.IQuestion question, Choice... choices) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("question");
         out.writeUTF(questionName);
         int id = 0;
         playerQuestions.putIfAbsent(player.getUniqueId(), new HashMap<>());
-        Map<Integer, IHestiaQuestion> playerQuestion = playerQuestions.get(player.getUniqueId());
+        Map<Integer, ChatEvents.IQuestion> playerQuestion = playerQuestions.get(player.getUniqueId());
         Optional<Integer> idOptional = playerQuestion.keySet().stream().max(Integer::compareTo);
         if(idOptional.isPresent()) {
             id = idOptional.get()+1;
@@ -58,10 +57,12 @@ public class PacketListeners implements PluginMessageListener {
             if (sousCanal.equals("answer")) {
                 int id = in.readInt();
                 String choiceName = in.readUTF();
-                IHestiaQuestion question = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
+                ChatEvents.IQuestion question = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
                 Object data = PacketUtils.readObject(in);
                 if(question != null) {
-                    question.answer(choiceName, id, data);
+                    if(question.answer(choiceName, id, true, data)) {
+                        removeQuestion(player, id);
+                    }
                 }
                 else {
                     player.sendMessage("Error with the answer, please retry");
@@ -83,8 +84,5 @@ public class PacketListeners implements PluginMessageListener {
         }
     }
 
-    @FunctionalInterface
-    public interface IHestiaQuestion {
-        void answer(String choiceName, int questionId, @Nullable Object data);
-    }
+
 }
