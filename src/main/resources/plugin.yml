@@ -1,6 +1,6 @@
 name: Hermes
 main: fr.kayrouge.hermes.Hermes
-version: 1.0.0
+version: ${version}
 author: Kayrouge
 api-version: 1.16
 depend: [ProtocolLib]

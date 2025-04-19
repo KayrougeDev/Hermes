@@ -26,13 +26,13 @@ public class MHermes implements Listener {
 
     public MHermes(Hermes plugin) {
         this.plugin = plugin;
-        this.LOGGER = plugin.LOGGER;
+        this.LOGGER = Hermes.LOGGER;
     }
 
     public void onEnable() {
         LOGGER.info("Enabling MHermes");
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "hermes:hestia");
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new MQuestionHandlers());
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new MQuestionHandlers(this));
         registerEvents();
     }
 

@@ -1,10 +1,10 @@
 package fr.kayrouge.hermes.event;
 
 import fr.kayrouge.hera.Choice;
+import fr.kayrouge.hera.util.Pair;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.config.MHermesConfig;
 import fr.kayrouge.hermes.mohist.MQuestionHandlers;
-import fr.kayrouge.hermes.util.Pair;
 import fr.kayrouge.hermes.util.Style;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;

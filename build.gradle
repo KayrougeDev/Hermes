@@ -5,11 +5,11 @@ plugins {
 }
 
 group 'fr.kayrouge'
-version '1.0.0'
+version plugin_version
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(16)
     }
 }
 
@@ -38,6 +38,15 @@ dependencies {
 }
 
 shadowJar {
+    archiveBaseName.set(project.name)
+    archiveVersion.set("")
     configurations = [project.configurations.shade]
     relocate 'net.kyori.adventure', 'hermes.libs.adventure'
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("plugin.yml") {
+        expand "version": project.version
+    }
 }
