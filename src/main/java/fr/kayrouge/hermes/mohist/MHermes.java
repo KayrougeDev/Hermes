@@ -4,13 +4,14 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.mohistmc.api.PlayerAPI;
 import fr.kayrouge.hera.Hera;
+import fr.kayrouge.hera.util.type.PacketType;
 import fr.kayrouge.hermes.Hermes;
-import fr.kayrouge.hermes.commands.CommandTest;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class MHermes implements Listener {
     public void onEnable() {
         LOGGER.info("Enabling MHermes");
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "hermes:hestia");
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new MQuestionHandlers(this));
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "hermes:hestia", new MPacketsHandler(this));
         registerEvents();
     }
 
@@ -57,9 +58,6 @@ public class MHermes implements Listener {
         return communicationList.contains(player.getUniqueId());
     }
 
-    public void addToCommunication(Player player) {
-        communicationList.add(player.getUniqueId());
-    }
 
     public List<UUID> getCommunicationList() {
         return communicationList;
@@ -71,9 +69,9 @@ public class MHermes implements Listener {
 
         if(PlayerAPI.hasMod(player, "hestia")) {
             Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                player.sendMessage("Hestia installed, custom GUI available");
+                player.sendMessage("[Hermes] Hestia detected, connection...");
                 ByteArrayDataOutput out = ByteStreams.newDataOutput();
-                out.writeUTF("join");
+                out.writeByte(PacketType.JOIN.getId());
                 out.writeLong(Hera.VERSION);
                 player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
             }, 25);
@@ -81,5 +79,10 @@ public class MHermes implements Listener {
         else {
             player.sendMessage("For a better experience install Hestia");
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        this.communicationList.remove(event.getPlayer().getUniqueId());
     }
 }

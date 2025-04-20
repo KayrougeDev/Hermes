@@ -4,7 +4,7 @@ import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hera.util.Pair;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.config.MHermesConfig;
-import fr.kayrouge.hermes.mohist.MQuestionHandlers;
+import fr.kayrouge.hermes.mohist.MPacketsHandler;
 import fr.kayrouge.hermes.util.Style;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -71,7 +71,7 @@ public class ChatEvents implements Listener {
 
     public static void askQuestion(Player player, String questionName, ChatEvents.IQuestion question, Choice... choices) {
         if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player) && MHermesConfig.customQuestionGUI) {
-            MQuestionHandlers.createAndSendQuestion(player, questionName, question, choices);
+            MPacketsHandler.createAndSendQuestion(player, questionName, question, choices);
         }
         else {
             List<String> choiceList = new ArrayList<>();

@@ -4,7 +4,9 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hera.Hera;
+import fr.kayrouge.hera.util.type.PacketType;
 import fr.kayrouge.hera.util.PacketUtils;
+import fr.kayrouge.hera.util.type.QuestionsType;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.event.ChatEvents;
 import org.bukkit.entity.Player;
@@ -16,19 +18,20 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class MQuestionHandlers implements PluginMessageListener {
+public class MPacketsHandler implements PluginMessageListener {
 
     private static final Map<UUID, Map<Integer, QuestionContext>> playerQuestions = new HashMap<>();
 
     private final MHermes mHermes;
 
-    public MQuestionHandlers(MHermes mHermes) {
+    public MPacketsHandler(MHermes mHermes) {
         this.mHermes = mHermes;
     }
 
     public static void createAndSendQuestion(Player player, String questionName, ChatEvents.IQuestion question, Choice... choices) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("question");
+        out.writeByte(PacketType.QUESTION.getId());
+        out.writeByte(QuestionsType.ANSWER.getId());
         out.writeUTF(questionName);
         int id = 0;
         playerQuestions.putIfAbsent(player.getUniqueId(), new HashMap<>());
@@ -58,45 +61,54 @@ public class MQuestionHandlers implements PluginMessageListener {
 
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(message));
         try {
-            String type = in.readUTF();
+            int typeID = in.readUnsignedByte();
+            PacketType type = PacketType.getById(typeID);
             switch (type) {
-                case "heraVersion" -> {
+                case JOIN -> {
                     long clientHera = in.readLong();
                     if(Hera.VERSION == clientHera) {
-                        mHermes.addToCommunication(player);
-                        player.sendMessage("Server and client Hera version match !");
+                        player.sendMessage("[Hermes] Connected successfully with Hestia !");
+                        mHermes.getCommunicationList().add(player.getUniqueId());
                     } else if (Hera.VERSION > clientHera) {
                         player.sendMessage("Hera outdated, please update Hestia");
                     }
                     else {
-                        player.kickPlayer("This Hera version ("+clientHera+") don't exist, please update Hestia");
+                        player.sendMessage("This Hera version ("+clientHera+") is not supported please use Hera-"+Hera.VERSION);
                     }
                 }
-                case "answer" -> {
-                    int id = in.readInt();
-                    String choiceName = in.readUTF();
-                    QuestionContext questionContext = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
-                    Object data = PacketUtils.readObject(in);
-                    if(questionContext != null) {
-                        if(questionContext.question().answer(choiceName, id, true, data)) {
-                            removeQuestion(player, id);
-                        }
-                    }
-                    else {
-                        player.sendMessage("Error with the answer, please retry");
-                    }
-                }
-                case "questions" -> sendQuestionsList(player);
-                default -> Hermes.LOGGER.warning("Unsupported packet received: "+type);
+                case QUESTION -> handleQuestionPacket(player, in);
+                default -> Hermes.LOGGER.warning("Unsupported packet id received: "+type.name()+" "+typeID);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void handleQuestionPacket(Player player, DataInputStream in) throws IOException {
+        QuestionsType type = QuestionsType.getById(in.readUnsignedByte());
+        switch (type) {
+            case LIST -> sendQuestionsList(player);
+            case ANSWER -> {
+                int id = in.readInt();
+                String choiceName = in.readUTF();
+                QuestionContext questionContext = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
+                Object data = PacketUtils.readObject(in);
+                if(questionContext != null) {
+                    if(questionContext.question().answer(choiceName, id, true, data)) {
+                        removeQuestion(player, id);
+                    }
+                }
+                else {
+                    player.sendMessage("Unknown question for this answer");
+                }
+            }
+        }
+    }
+
     public void sendQuestionsList(Player player) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("questions");
+        out.writeByte(PacketType.QUESTION.getId());
+        out.writeByte(QuestionsType.LIST.getId());
         Map<Integer, QuestionContext> questionMap = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>());
 
         out.writeInt(questionMap.size());

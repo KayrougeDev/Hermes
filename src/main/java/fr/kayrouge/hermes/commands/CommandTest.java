@@ -6,7 +6,7 @@ import fr.kayrouge.hera.Choice;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.event.ChatEvents;
 import fr.kayrouge.hermes.game.TerritoryGame;
-import fr.kayrouge.hermes.mohist.MQuestionHandlers;
+import fr.kayrouge.hermes.mohist.MPacketsHandler;
 import fr.kayrouge.hermes.territory.TerritoryManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -24,23 +24,21 @@ public class CommandTest implements CommandExecutor {
         commandSender.sendMessage("TEST COMMAND ISSUED '"+label+"'");
 
         if(label.equalsIgnoreCase("question")) {
-            if(!(commandSender instanceof Player)) return true;
-            Player player = (Player)commandSender;
+            if(!(commandSender instanceof Player player)) return true;
 
             ChatEvents.askQuestion(player, "Marche stp", (choiceName, questionId, customHandler, data) -> {
                 if(data == null) {
                     data = "NULL";
                 }
                 Hermes.LOGGER.info(choiceName +" "+questionId+" "+data);
-                MQuestionHandlers.removeQuestion(player, questionId);
+                MPacketsHandler.removeQuestion(player, questionId);
                 return true;
             }, Choice.of("cancel"), Choice.of("texte moi", Choice.Type.TEXT_ENTRY));
             return true;
         }
 
         if(label.equalsIgnoreCase("game")) {
-            if(!(commandSender instanceof Player)) return true;
-            Player player = (Player)commandSender;
+            if(!(commandSender instanceof Player player)) return true;
 
             String territoryName = "test";
             if(args.length > 0) {
