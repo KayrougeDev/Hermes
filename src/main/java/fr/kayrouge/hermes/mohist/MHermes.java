@@ -74,7 +74,13 @@ public class MHermes implements Listener {
                 out.writeByte(PacketType.JOIN.getId());
                 out.writeLong(Hera.VERSION);
                 player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
-            }, 25);
+            }, 30);
+
+            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                if(!communicationAvailable(player)) {
+                    player.sendMessage("[Hermes] No answer from Hestia received, try quit and rejoin server (without closing your game)");
+                }
+            }, 70);
         }
         else {
             player.sendMessage("For a better experience install Hestia");

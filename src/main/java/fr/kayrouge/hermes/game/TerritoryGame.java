@@ -99,6 +99,7 @@ public class TerritoryGame extends Game {
         if(playersInventory.containsKey(player)) {
             player.getInventory().setContents(playersInventory.get(player));
         }
+        player.setLevel(0);
     }
 
     @Override
@@ -200,7 +201,7 @@ public class TerritoryGame extends Game {
         player.getInventory().setContents(defaultInventory);
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void playerInteract(PlayerInteractEvent event){
         Player player = event.getPlayer();
         if(!players.containsKey(player.getUniqueId())) return;
@@ -265,7 +266,7 @@ public class TerritoryGame extends Game {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void playerDrop(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         if(!players.containsKey(player.getUniqueId())) return;
@@ -281,7 +282,7 @@ public class TerritoryGame extends Game {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void playerClickInventory(InventoryClickEvent event) {
         if(!(event.getWhoClicked() instanceof Player player)) return;
         if(!players.containsKey(player.getUniqueId())) return;
@@ -289,9 +290,10 @@ public class TerritoryGame extends Game {
         event.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void playerSwitchHand(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
+        player.remove();
         if(!players.containsKey(player.getUniqueId())) return;
 
         if(isState(GState.PLAYING)) {
@@ -300,17 +302,24 @@ public class TerritoryGame extends Game {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void playerHeldItemChange(PlayerItemHeldEvent event) {
-        if(!players.containsKey(event.getPlayer().getUniqueId())) return;
+        Player player = event.getPlayer();
+
+        if (event.getNewSlot() == event.getPreviousSlot()) {
+            return;
+        }
+
+        if (!players.containsKey(player.getUniqueId())) return;
+
         boolean isPlaying = isState(GState.PLAYING);
-        if(isState(GState.STARTING) || isPlaying) {
-            if(isPlaying) {
-                if(event.getNewSlot() > event.getPreviousSlot()) {
-                    incrementTroopsbar(event.getPlayer(), 0.05);
-                }
-                else {
-                    incrementTroopsbar(event.getPlayer(), -0.05);
+
+        if (isState(GState.STARTING) || isPlaying) {
+            if (isPlaying) {
+                if (event.getNewSlot() < event.getPreviousSlot()) {
+                    incrementTroopsbar(player, 0.05);
+                } else {
+                    incrementTroopsbar(player, -0.05);
                 }
             }
             event.setCancelled(true);
@@ -320,16 +329,17 @@ public class TerritoryGame extends Game {
 
     private void createTroopsBar(Player player) {
         final double defaultValue = 0.2d;
+        troopsValue.put(player.getUniqueId(), defaultValue);
         if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             out.writeByte(PacketType.TERRITORY_GAME.getId());
             out.writeByte(TerritoryType.SET.getId());
             out.writeDouble(defaultValue);
             player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
-            troopsValue.put(player.getUniqueId(), defaultValue);
         }
         else {
             final BossBar troopsBar = Bukkit.createBossBar(new NamespacedKey(Hermes.PLUGIN, player.getUniqueId().toString()), "Troups", BarColor.BLUE, BarStyle.SEGMENTED_20, BarFlag.PLAY_BOSS_MUSIC);
+            updateTitle(troopsBar, defaultValue, 0);
             troopsBar.setProgress(defaultValue);
             troopsBar.addPlayer(player);
             troopsBar.setVisible(true);
@@ -337,44 +347,53 @@ public class TerritoryGame extends Game {
     }
 
     private void removeTroopsbar(Player player) {
+        troopsValue.remove(player.getUniqueId());
         if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             out.writeByte(PacketType.TERRITORY_GAME.getId());
             out.writeByte(TerritoryType.VISIBLE.getId());
             out.writeBoolean(false);
             player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
-            troopsValue.remove(player.getUniqueId());
         }
         else {
-            Bukkit.removeBossBar(new NamespacedKey(Hermes.PLUGIN, player.getUniqueId().toString()));
+            KeyedBossBar bossBar = Bukkit.getBossBar(new NamespacedKey(Hermes.PLUGIN, player.getUniqueId().toString()));
+            if(bossBar != null) {
+                bossBar.setVisible(false);
+                bossBar.removeAll();
+                Bukkit.removeBossBar(bossBar.getKey());
+            }
         }
     }
 
     private void incrementTroopsbar(Player player, double value) {
+        double newValue = troopsValueCalculator(troopsValue.getOrDefault(player.getUniqueId(), 0d), value);
         if(Hermes.isMohist() && Hermes.mohistHermes().communicationAvailable(player)) {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             out.writeByte(PacketType.TERRITORY_GAME.getId());
             out.writeByte(TerritoryType.SET.getId());
-            out.writeDouble(troopsValueCalculator(troopsValue.get(player.getUniqueId()), value));
+            out.writeDouble(newValue);
             player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
         }
         else {
             BossBar bossBar = Bukkit.getBossBar(new NamespacedKey(Hermes.PLUGIN, player.getUniqueId().toString()));
             if(bossBar != null) {
-                bossBar.setProgress(troopsValueCalculator(bossBar.getProgress(), value));
+                bossBar.setProgress(newValue);
+                updateTitle(bossBar, newValue, 0);
             }
         }
+        troopsValue.put(player.getUniqueId(), newValue);
+    }
+
+    private void updateTitle(BossBar bossBar, double pourcentage, int troops) {
+        bossBar.setTitle("Troops "+troops+" ("+(pourcentage*100)+"%)");
     }
 
     private double troopsValueCalculator(double oldValue, double increment) {
-        if(oldValue+increment > 1) {
-            return 1;
-        }
-        else if(oldValue+increment < 0) {
-            return 0;
-        }
-        else {
-            return oldValue+increment;
-        }
+        double newVal = oldValue + increment;
+
+        if (newVal >= 1) return 1;
+        if (newVal <= 0) return 0;
+
+        return Math.round(newVal * 100.0) / 100.0;
     }
 }

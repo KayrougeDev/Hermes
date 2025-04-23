@@ -22,6 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class Hermes extends JavaPlugin implements Listener {
@@ -101,6 +102,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
     public void onDisable() {
         TerritoryManager.save();
+        getGameManager().getGames().forEach((integer, game) -> game.onGameTerminated());
         if(this.adventure != null) {
             this.adventure.close();
             this.adventure = null;
@@ -108,6 +110,27 @@ public class Hermes extends JavaPlugin implements Listener {
         if(isMohist()) {
             mohistHermes().onDisable();
         }
+    }
+
+    public void stop(int time) {
+        AtomicInteger timer = new AtomicInteger(time);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
+
+            int currentTime = timer.getAndDecrement();
+            if(currentTime == 0) {
+                stop();
+                task.cancel();
+                return;
+            }
+            Bukkit.broadcastMessage("Server is stopping in "+currentTime+" seconds!");
+
+        }, 0L, 20L);
+    }
+
+    public void stop() {
+        Bukkit.broadcastMessage("Server stopping...");
+
+        getServer().shutdown();
     }
 
     private void registerEvents() {
@@ -124,16 +147,15 @@ public class Hermes extends JavaPlugin implements Listener {
     }
 
 
-
     public void registerCommand(String command, CommandExecutor executor) {
         PluginCommand pluginCommand = getCommand(command);
         if(pluginCommand != null) {
             pluginCommand.setExecutor(executor);
-            if(executor instanceof TabCompleter) {
-                pluginCommand.setTabCompleter((TabCompleter)executor);
+            if(executor instanceof TabCompleter tabCompleter) {
+                pluginCommand.setTabCompleter(tabCompleter);
             }
-            if(executor instanceof Listener) {
-                getServer().getPluginManager().registerEvents((Listener)executor, this);
+            if(executor instanceof Listener listener) {
+                getServer().getPluginManager().registerEvents(listener, this);
             }
         }
     }
@@ -146,7 +168,7 @@ public class Hermes extends JavaPlugin implements Listener {
         return gameManager;
     }
 
-    //    @EventHandler
+//    @EventHandler
 //    public void onTest(final BukkitHookForgeEvent e) {
 //        if (e.getEvent() instanceof ServerChatEvent) {
 //            ServerChatEvent chatEvent = (ServerChatEvent) e.getEvent();
