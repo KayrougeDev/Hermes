@@ -20,3 +20,5 @@ commands:
     usage: /question
   game:
     usage: /game
+  murdermystery:
+    usage: /murdermystery

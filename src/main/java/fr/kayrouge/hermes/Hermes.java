@@ -5,11 +5,13 @@ import fr.kayrouge.hermes.commands.CommandMod;
 import fr.kayrouge.hermes.commands.CommandTest;
 import fr.kayrouge.hermes.config.HermesConfig;
 import fr.kayrouge.hermes.event.ChatEvents;
+import fr.kayrouge.hermes.game.murdermystery.MurderMap;
 import fr.kayrouge.hermes.mohist.MHermes;
 import fr.kayrouge.hermes.team.TeamsCommand;
 import fr.kayrouge.hermes.territory.TerritoryCommand;
 import fr.kayrouge.hermes.territory.TerritoryManager;
 import fr.kayrouge.hermes.util.Style;
+import lombok.Getter;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -29,6 +31,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
     public static Hermes PLUGIN;
     public static Logger LOGGER;
+    @Getter
     private static GameManager gameManager;
 
     private static @Nullable MHermes MOHIST_HERMES;
@@ -92,6 +95,7 @@ public class Hermes extends JavaPlugin implements Listener {
         }
 
         TerritoryManager.load();
+        MurderMap.loadMaps();
         registerEvents();
         registerCommands();
 
@@ -142,8 +146,11 @@ public class Hermes extends JavaPlugin implements Listener {
         registerCommand("invsee", new CommandMod());
         registerCommand("territory", new TerritoryCommand());
         registerCommand("teams", new TeamsCommand());
-        registerCommand("game", new CommandTest());
-        registerCommand("question", new CommandTest());
+
+        CommandTest commandTest = new CommandTest();
+        registerCommand("game", commandTest);
+        registerCommand("question", commandTest);
+        registerCommand("murdermystery", commandTest);
     }
 
 
@@ -164,11 +171,7 @@ public class Hermes extends JavaPlugin implements Listener {
         return MOHIST_HERMES != null;
     }
 
-    public static GameManager getGameManager() {
-        return gameManager;
-    }
-
-//    @EventHandler
+    //    @EventHandler
 //    public void onTest(final BukkitHookForgeEvent e) {
 //        if (e.getEvent() instanceof ServerChatEvent) {
 //            ServerChatEvent chatEvent = (ServerChatEvent) e.getEvent();

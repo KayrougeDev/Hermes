@@ -35,13 +35,16 @@ dependencies {
 
     shade 'net.kyori:adventure-api:4.19.0'
     shade 'net.kyori:adventure-platform-bukkit:4.3.4'
+
+    compileOnly("org.projectlombok:lombok:1.18.38")
+    annotationProcessor("org.projectlombok:lombok:1.18.38")
 }
 
 shadowJar {
     archiveBaseName.set(project.name)
     archiveVersion.set("")
     configurations = [project.configurations.shade]
-    relocate 'net.kyori.adventure', 'hermes.libs.adventure'
+    relocate 'net.kyori', 'hermes.libs.kyori'
 }
 
 processResources {
