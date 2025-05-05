@@ -6,6 +6,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
+import fr.kayrouge.hermes.Hermes;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -13,14 +14,12 @@ import org.bukkit.entity.Player;
 
 public class BlockUtils {
 
-    private static final ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-
     public static void sendFakeBlock(Player player, Location loc, Material fakeMaterial) {
-        PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.BLOCK_CHANGE);
+        PacketContainer packet = Hermes.PROTOCOL.createPacket(PacketType.Play.Server.BLOCK_CHANGE);
         packet.getBlockPositionModifier().write(0, new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
         packet.getBlockData().write(0, WrappedBlockData.createData(fakeMaterial));
 
-        protocolManager.sendServerPacket(player, packet);
+        Hermes.PROTOCOL.sendServerPacket(player, packet);
     }
 
     public static void createCircle(Location center, int radius, Material block, Player player) {

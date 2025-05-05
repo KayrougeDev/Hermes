@@ -9,6 +9,7 @@ import fr.kayrouge.hera.util.PacketUtils;
 import fr.kayrouge.hera.util.type.QuestionsType;
 import fr.kayrouge.hermes.Hermes;
 import fr.kayrouge.hermes.event.ChatEvents;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class MPacketsHandler implements PluginMessageListener {
             int typeID = in.readUnsignedByte();
             PacketType type = PacketType.getById(typeID);
             switch (type) {
-                case JOIN -> {
+                case JOIN:
                     long clientHera = in.readLong();
                     if(Hera.VERSION == clientHera) {
                         player.sendMessage("[Hermes] Connected successfully with Hestia !");
@@ -75,9 +76,12 @@ public class MPacketsHandler implements PluginMessageListener {
                     else {
                         player.sendMessage("This Hera version ("+clientHera+") is not supported please use Hera-"+Hera.VERSION);
                     }
-                }
-                case QUESTION -> handleQuestionPacket(player, in);
-                default -> Hermes.LOGGER.warning("Unsupported packet id received: "+type.name()+" "+typeID);
+                    break;
+                case QUESTION:
+                    handleQuestionPacket(player, in);
+                    break;
+                default: Hermes.LOGGER.warning("Unsupported packet id received: "+type.name()+" "+typeID);
+                    break;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -87,21 +91,22 @@ public class MPacketsHandler implements PluginMessageListener {
     private void handleQuestionPacket(Player player, DataInputStream in) throws IOException {
         QuestionsType type = QuestionsType.getById(in.readUnsignedByte());
         switch (type) {
-            case LIST -> sendQuestionsList(player);
-            case ANSWER -> {
+            case LIST: sendQuestionsList(player);
+                break;
+            case ANSWER:
                 int id = in.readInt();
                 String choiceName = in.readUTF();
                 QuestionContext questionContext = playerQuestions.getOrDefault(player.getUniqueId(), new HashMap<>()).get(id);
                 Object data = PacketUtils.readObject(in);
                 if(questionContext != null) {
-                    if(questionContext.question().answer(choiceName, id, true, data)) {
+                    if(questionContext.question.answer(choiceName, id, true, data)) {
                         removeQuestion(player, id);
                     }
                 }
                 else {
                     player.sendMessage("Unknown question for this answer");
                 }
-            }
+                break;
         }
     }
 
@@ -115,12 +120,20 @@ public class MPacketsHandler implements PluginMessageListener {
 
         questionMap.forEach((id, questionContext) -> {
             out.writeInt(id);
-            out.writeUTF(questionContext.message());
+            out.writeUTF(questionContext.message);
         });
 
         player.sendPluginMessage(Hermes.PLUGIN, "hermes:hestia", out.toByteArray());
     }
 
-    public record QuestionContext(ChatEvents.IQuestion question, String message, Choice... choices) {
+    public static class QuestionContext {
+        public final ChatEvents.IQuestion question;
+        public final String message;
+        public final Choice[] choices;
+        public QuestionContext(ChatEvents.IQuestion question, String message, Choice... choices) {
+            this.question = question;
+            this.message = message;
+            this.choices = choices;
+        }
     }
 }

@@ -27,7 +27,8 @@ public class CommandTest implements CommandExecutor {
         commandSender.sendMessage("TEST COMMAND ISSUED '"+label+"'");
 
         if(label.equalsIgnoreCase("question")) {
-            if(!(commandSender instanceof Player player)) return true;
+            if(!(commandSender instanceof Player)) return true;
+            Player player = (Player)commandSender;
 
             ChatEvents.askQuestion(player, "Marche stp", (choiceName, questionId, customHandler, data) -> {
                 if(data == null) {
@@ -43,7 +44,8 @@ public class CommandTest implements CommandExecutor {
         GameManager gm = Hermes.getGameManager();
 
         if(label.equalsIgnoreCase("murdermystery")) {
-            if(!(commandSender instanceof Player player)) return true;
+            if(!(commandSender instanceof Player)) return true;
+            Player player = (Player)commandSender;
 
             Game game;
             if(Hermes.getGameManager().getGames().values().stream().noneMatch(game1 -> game1 instanceof MurderMysteryGame)) {
@@ -66,7 +68,8 @@ public class CommandTest implements CommandExecutor {
         }
 
         if(label.equalsIgnoreCase("game")) {
-            if(!(commandSender instanceof Player player)) return true;
+            if(!(commandSender instanceof Player)) return true;
+            Player player = (Player)commandSender;
 
             String territoryName = "test";
             if(args.length > 0) {

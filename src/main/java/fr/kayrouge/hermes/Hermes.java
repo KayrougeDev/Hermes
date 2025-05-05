@@ -1,10 +1,13 @@
 package fr.kayrouge.hermes;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import fr.kayrouge.dionysios.GameManager;
 import fr.kayrouge.hermes.commands.CommandMod;
 import fr.kayrouge.hermes.commands.CommandTest;
 import fr.kayrouge.hermes.config.HermesConfig;
 import fr.kayrouge.hermes.event.ChatEvents;
+import fr.kayrouge.hermes.event.CustomPlayerList;
 import fr.kayrouge.hermes.game.murdermystery.MurderMap;
 import fr.kayrouge.hermes.mohist.MHermes;
 import fr.kayrouge.hermes.team.TeamsCommand;
@@ -31,6 +34,7 @@ public class Hermes extends JavaPlugin implements Listener {
 
     public static Hermes PLUGIN;
     public static Logger LOGGER;
+    public static ProtocolManager PROTOCOL;
     @Getter
     private static GameManager gameManager;
 
@@ -64,6 +68,7 @@ public class Hermes extends JavaPlugin implements Listener {
         saveDefaultConfig();
         gameManager = new GameManager(this);
         LOGGER = this.getLogger();
+        PROTOCOL = ProtocolLibrary.getProtocolManager();
         gameManager.setAfterGameLocation(Bukkit.getWorlds().get(0).getSpawnLocation());
 
         boolean isMohistServer;
@@ -98,6 +103,18 @@ public class Hermes extends JavaPlugin implements Listener {
         MurderMap.loadMaps();
         registerEvents();
         registerCommands();
+
+        String version = Bukkit.getServer().getClass().getName();
+        version = version.substring(version.indexOf("craftbukkit.") + "craftbukkit.".length());
+        version = version.substring(0, version.indexOf("."));
+        LOGGER.info("Server version: "+ version +" !");
+
+        try {
+            Class.forName("org.bukkit.craftbukkit." + version + ".entity.CraftPlayer");
+            LOGGER.info("CraftPlayer finded !");
+        } catch (ClassNotFoundException e) {
+            LOGGER.warning("Can't find CraftPlayer");
+        }
 
         if(isMohist()) {
             mohistHermes().onEnable();
@@ -140,6 +157,7 @@ public class Hermes extends JavaPlugin implements Listener {
     private void registerEvents() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new ChatEvents(), this);
+        pm.registerEvents(new CustomPlayerList(), this);
     }
 
     private void registerCommands() {
@@ -158,11 +176,11 @@ public class Hermes extends JavaPlugin implements Listener {
         PluginCommand pluginCommand = getCommand(command);
         if(pluginCommand != null) {
             pluginCommand.setExecutor(executor);
-            if(executor instanceof TabCompleter tabCompleter) {
-                pluginCommand.setTabCompleter(tabCompleter);
+            if(executor instanceof TabCompleter) {
+                pluginCommand.setTabCompleter((TabCompleter)executor);
             }
-            if(executor instanceof Listener listener) {
-                getServer().getPluginManager().registerEvents(listener, this);
+            if(executor instanceof Listener) {
+                getServer().getPluginManager().registerEvents((Listener)executor, this);
             }
         }
     }

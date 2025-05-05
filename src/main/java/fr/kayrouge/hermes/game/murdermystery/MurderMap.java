@@ -35,6 +35,7 @@ public class MurderMap {
             File[] ymlFiles = mapFolder.listFiles((dir, fileName) -> fileName.toLowerCase().endsWith(".yml"));
 
             if (ymlFiles == null) {
+                Hermes.LOGGER.info("No map find in MurderMysteryMap folder !");
                 return;
             }
 
@@ -62,10 +63,10 @@ public class MurderMap {
                         if(area == null) continue;
                         int radius = area.getInt("radius", -1);
                         int x = area.getInt("x", 0);
-                        int y = area.getInt("y", 0);
+                        int y = area.getInt("y", world.getMinHeight());
                         int z = area.getInt("z", 0);
 
-                        if(radius == -1) {
+                        if(radius == -1 || y == world.getMinHeight()) {
                             Hermes.LOGGER.warning("Invalid spawn area '"+key+"' in "+ymlFile.getName());
                             continue;
                         }
@@ -99,7 +100,20 @@ public class MurderMap {
     }
 
 
-    public record SpawnArea(String name, int x, int y, int z, int radius) {}
+    public static class SpawnArea {
+        public final String name;
+        public final int x;
+        public final int y;
+        public final int z;
+        public final int radius;
+        public SpawnArea(String name, int x, int y, int z, int radius) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.radius = radius;
+        }
+    }
 
     private static void checkAndCreateFolder() {
         if(!mapFolder.exists()) {

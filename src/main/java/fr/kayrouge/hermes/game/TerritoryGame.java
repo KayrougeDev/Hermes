@@ -284,7 +284,8 @@ public class TerritoryGame extends Game {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void playerClickInventory(InventoryClickEvent event) {
-        if(!(event.getWhoClicked() instanceof Player player)) return;
+        if(!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
         if(!players.containsKey(player.getUniqueId())) return;
 
         event.setCancelled(true);
